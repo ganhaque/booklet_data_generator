@@ -1,0 +1,182 @@
+processing: Course { available: 8, enrollmentCount: 185, capacity: 193, abbreviation: "CM", number: 1011, course_type: None, section: 1, title: "INTRO TO CM", creditHour: "3.0", begin: Number(900), end: Number(980), duration: Number(80), days: "T TH", roomNumber: Some("0005"), building: Some("LOCKETT"), instructor: Some("SCHNEIDER D"), specialEnrollment: None, lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1011, 1,
+8, 185,
+Some("SCHNEIDER D"), Some("0005"), Some("LOCKETT"),
+Some(900), Some(980), Some("T TH"), None
+)
+processing: Course { available: 1, enrollmentCount: 49, capacity: 50, abbreviation: "CM", number: 1020, course_type: Some("LAB"), section: 4, title: "ENGR GRAPS FOR MECH", creditHour: "2.0", begin: Number(450), end: Number(560), duration: Number(110), days: "M W", roomNumber: None, building: None, instructor: Some("PECQUET C"), specialEnrollment: Some("CI-VISUAL&TECH"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1020, 4,
+1, 49,
+Some("PECQUET C"), None, None,
+Some(450), Some(560), Some("M W"), Some("CI-VISUAL&TECH")
+)
+processing: Course { available: 2, enrollmentCount: 48, capacity: 50, abbreviation: "CM", number: 1020, course_type: Some("LAB"), section: 2, title: "ENGR GRAPS FOR MECH", creditHour: "2.0", begin: Number(570), end: Number(680), duration: Number(110), days: "M W", roomNumber: None, building: None, instructor: Some("DAVIS P"), specialEnrollment: Some("CI-VISUAL&TECH"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1020, 2,
+2, 48,
+Some("DAVIS P"), None, None,
+Some(570), Some(680), Some("M W"), Some("CI-VISUAL&TECH")
+)
+processing: Course { available: 2, enrollmentCount: 48, capacity: 50, abbreviation: "CM", number: 1020, course_type: Some("LAB"), section: 3, title: "ENGR GRAPS FOR MECH", creditHour: "2.0", begin: Number(690), end: Number(800), duration: Number(110), days: "M W", roomNumber: None, building: None, instructor: Some("DAVIS P"), specialEnrollment: Some("CI-VISUAL&TECH"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1020, 3,
+2, 48,
+Some("DAVIS P"), None, None,
+Some(690), Some(800), Some("M W"), Some("CI-VISUAL&TECH")
+)
+processing: Course { available: 2, enrollmentCount: 56, capacity: 58, abbreviation: "CM", number: 1020, course_type: Some("LAB"), section: 5, title: "ENGR GRAPS FOR MECH", creditHour: "2.0", begin: Number(690), end: Number(800), duration: Number(110), days: "M W", roomNumber: None, building: None, instructor: Some("CHAMPNEY R"), specialEnrollment: Some("CI-VISUAL&TECH"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1020, 5,
+2, 56,
+Some("CHAMPNEY R"), None, None,
+Some(690), Some(800), Some("M W"), Some("CI-VISUAL&TECH")
+)
+processing: Course { available: 0, enrollmentCount: 58, capacity: 58, abbreviation: "CM", number: 1020, course_type: Some("LAB"), section: 1, title: "ENGR GRAPS FOR MECH", creditHour: "2.0", begin: Number(510), end: Number(620), duration: Number(110), days: "T TH", roomNumber: None, building: None, instructor: Some("CHAMPNEY R"), specialEnrollment: Some("CI-VISUAL&TECH"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1020, 1,
+0, 58,
+Some("CHAMPNEY R"), None, None,
+Some(510), Some(620), Some("T TH"), Some("CI-VISUAL&TECH")
+)
+processing: Course { available: 19, enrollmentCount: 131, capacity: 150, abbreviation: "CM", number: 1112, course_type: None, section: 1, title: "CONST MATL METH I", creditHour: "3.0", begin: Number(810), end: Number(890), duration: Number(80), days: "T TH", roomNumber: Some("0016"), building: Some("LOCKETT"), instructor: Some("HEUMANN S"), specialEnrollment: None, lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 1112, 1,
+19, 131,
+Some("HEUMANN S"), Some("0016"), Some("LOCKETT"),
+Some(810), Some(890), Some("T TH"), None
+)
+processing: Course { available: 13, enrollmentCount: 12, capacity: 25, abbreviation: "CM", number: 2105, course_type: None, section: 1, title: "CONST SURVEYING", creditHour: "3.0", begin: Number(450), end: Number(560), duration: Number(110), days: "M", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G"), specialEnrollment: None, lab: Some(Lab { lab_type: "LAB", begin: Number(450), end: Number(560), duration: Number(110), days: "W", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G") }) }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2105, 1,
+13, 12,
+Some("TRAHAN G"), Some("0161"), Some("ELAB"),
+Some(450), Some(560), Some("M"), None
+)
+processing: Course { available: 1, enrollmentCount: 24, capacity: 25, abbreviation: "CM", number: 2105, course_type: None, section: 2, title: "CONST SURVEYING", creditHour: "3.0", begin: Number(570), end: Number(680), duration: Number(110), days: "M", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G"), specialEnrollment: None, lab: Some(Lab { lab_type: "LAB", begin: Number(570), end: Number(680), duration: Number(110), days: "W", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G") }) }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2105, 2,
+1, 24,
+Some("TRAHAN G"), Some("0161"), Some("ELAB"),
+Some(570), Some(680), Some("M"), None
+)
+processing: Course { available: 0, enrollmentCount: 25, capacity: 25, abbreviation: "CM", number: 2105, course_type: None, section: 3, title: "CONST SURVEYING", creditHour: "3.0", begin: Number(750), end: Number(860), duration: Number(110), days: "M", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G"), specialEnrollment: None, lab: Some(Lab { lab_type: "LAB", begin: Number(750), end: Number(860), duration: Number(110), days: "W", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G") }) }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2105, 3,
+0, 25,
+Some("TRAHAN G"), Some("0161"), Some("ELAB"),
+Some(750), Some(860), Some("M"), None
+)
+processing: Course { available: 2, enrollmentCount: 23, capacity: 25, abbreviation: "CM", number: 2105, course_type: None, section: 4, title: "CONST SURVEYING", creditHour: "3.0", begin: Number(870), end: Number(980), duration: Number(110), days: "M", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G"), specialEnrollment: None, lab: Some(Lab { lab_type: "LAB", begin: Number(870), end: Number(980), duration: Number(110), days: "W", roomNumber: Some("0161"), building: Some("ELAB"), instructor: Some("TRAHAN G") }) }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2105, 4,
+2, 23,
+Some("TRAHAN G"), Some("0161"), Some("ELAB"),
+Some(870), Some(980), Some("M"), None
+)
+processing: Course { available: 21, enrollmentCount: 129, capacity: 150, abbreviation: "CM", number: 2112, course_type: None, section: 1, title: "CONST MATL METH II", creditHour: "3.0", begin: String("?"), end: String("?"), duration: String("?"), days: "?", roomNumber: Some("?"), building: Some("?"), instructor: Some("FRIEDLAND C"), specialEnrollment: Some("75-99% WEB BASE"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2112, 1,
+21, 129,
+Some("FRIEDLAND C"), Some("?"), Some("?"),
+None, None, None, Some("75-99% WEB BASE")
+)
+processing: Course { available: 44, enrollmentCount: 105, capacity: 149, abbreviation: "CM", number: 2113, course_type: None, section: 1, title: "CONSTRUCTION EQUIP", creditHour: "3.0", begin: Number(1080), end: Number(1250), duration: Number(170), days: "T", roomNumber: Some("1200"), building: Some("PATRICK TAYLOR"), instructor: Some("WANG C"), specialEnrollment: Some("75-99% WEB BASE"), lab: None }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2113, 1,
+44, 105,
+Some("WANG C"), Some("1200"), Some("PATRICK TAYLOR"),
+Some(1080), Some(1250), Some("T"), Some("75-99% WEB BASE")
+)
+processing: Course { available: 18, enrollmentCount: 26, capacity: 44, abbreviation: "CM", number: 2116, course_type: None, section: 1, title: "CONST PLAN READING", creditHour: "3.0", begin: String("?"), end: String("?"), duration: String("?"), days: "?", roomNumber: Some("?"), building: Some("?"), instructor: Some("LEE Y"), specialEnrollment: Some("75-99% WEB BASE"), lab: Some(Lab { lab_type: "LAB", begin: Number(510), end: Number(620), duration: Number(110), days: "M", roomNumber: Some("3133"), building: Some("PATRICK TAYLOR"), instructor: Some("LEE Y") }) }
+
+INSERT OR IGNORE INTO course (
+semester_title, department_title, number, section,
+available, enrollment_count,
+instructor_name, room_number, building_name,
+time_begin, time_end, days_pattern, special_enrollment_type
+) VALUES (
+"Fall 2018", "CONSTRUCTION MANAGEMENT", 2116, 1,
+18, 26,
+Some("LEE Y"), Some("?"), Some("?"),
+None, None, None, Some("75-99% WEB BASE")
+)
