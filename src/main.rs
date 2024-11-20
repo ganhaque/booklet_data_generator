@@ -1,52 +1,44 @@
+mod helper;
+
+use helper::parse_time_string;
 use rusqlite::{params, Connection, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
 
-#[derive(Debug, Deserialize)]
-struct Lab {
-  #[serde(rename = "type")]
-  lab_type: String,
-  begin: Value,
-  end: Value,
-  duration: Value,
-  days: String,
-  roomNumber: Option<String>,
+#[derive(Debug, Serialize, Deserialize)]
+struct Extension {
+  course_type: Option<String>,
+  time: Option<String>,
+  days: Option<String>,
+  room: Option<String>,
   building: Option<String>,
   instructor: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct Course {
-  available: i32,
-  enrollmentCount: i32,
-  capacity: i32,
-  abbreviation: String,
-  number: i32,
-  #[serde(rename = "type")]
+  available: Option<String>,
+  enrollment: Option<String>,
+  abbreviation: Option<String>,
+  course_number: Option<String>,
   course_type: Option<String>,
-  section: i32,
-  title: String,
-  creditHour: String,
-  begin: Value,
-  end: Value,
-  duration: Value,
-  days: String,
-  roomNumber: Option<String>,
+  section: Option<String>,
+  course_title: Option<String>,
+  credit_hour: Option<String>,
+  time: Option<String>,
+  days: Option<String>,
+  room: Option<String>,
   building: Option<String>,
+  special_enrollment: Option<String>,
   instructor: Option<String>,
-  specialEnrollment: Option<String>,
-  lab: Option<Lab>,
+  extension: Option<Extension>,
 }
 
 #[derive(Debug, Deserialize)]
 struct Database {
   #[serde(flatten)]
   semesters: std::collections::HashMap<String, std::collections::HashMap<String, Vec<Course>>>,
-}
-
-fn parse_value_as_i32(value: &Value) -> Option<i32> {
-  value.as_i64().map(|v| v as i32)
 }
 
 const DB_PATH: &str = "../cats.db";
@@ -69,237 +61,241 @@ fn main() -> Result<()> {
   let json_content = fs::read_to_string(JSON_PATH).expect("Failed to read JSON file");
   let database: Database = serde_json::from_str(&json_content).expect("Failed to parse JSON");
 
-  // Insert data into the database
-  insert_data(&conn, database)?;
+  initialize_semester_table(&conn, &database);
+  initialize_department_table(&conn, &database);
+  initialize_course_table(&conn, database);
 
   Ok(())
 }
 
-fn insert_data(conn: &Connection, database: Database) -> Result<()> {
-  for (semester_title, departments) in database.semesters {
-    // Skip some semesters
-    if let Some(year_str) = semester_title.split_whitespace().last() {
-      if let Ok(year) = year_str.parse::<u32>() {
-        if year < 2018 {
-          continue;
-        }
-      }
-    }
-
-    // Insert semester
-    conn.execute(
-      "INSERT OR IGNORE INTO semester (title) VALUES (?1)",
+fn initialize_semester_table(conn: &Connection, database: &Database) {
+  for (semester_title, _) in &database.semesters {
+    let _ = conn.execute(
+      "INSERT INTO semester (semester_title) VALUES (?1)",
       params![semester_title],
-    )?;
+    );
+  }
+}
 
+fn initialize_department_table(conn: &Connection, database: &Database) {
+  for (_semester_title, departments) in &database.semesters {
     for (department_title, courses) in departments {
-      // Insert department
       let department_abbreviation = courses
         .get(0)
         .map(|course| course.abbreviation.clone())
         .unwrap_or_default();
-      conn.execute(
-        "INSERT OR IGNORE INTO department (title, abbreviation) VALUES (?1, ?2)",
+      let _ = conn.execute(
+        "INSERT OR IGNORE INTO department (department_title, abbreviation) VALUES (?1, ?2)",
         params![department_title, department_abbreviation],
-      )?;
+      );
+    }
+  }
+}
 
+fn initialize_course_table(conn: &Connection, database: Database) {
+  for (semester_title, departments) in database.semesters {
+    for (department_title, courses) in departments {
+      println!("\x1b[32m[SUCCESS]\x1b[0m {}, {}", semester_title, department_title);
       for course in courses {
-        // println!("processing: {:?}", course);
-        // println!();
-
-        // Insert course type if present
-        if let Some(course_type) = &course.course_type {
-          conn.execute(
-            "INSERT OR IGNORE INTO course_type (type) VALUES (?1)",
-            params![course_type],
-          )?;
-        }
-
-        // Insert course template
-        conn.execute(
-          "INSERT OR IGNORE INTO course_template (department_title, number, title, credit_hour, type) VALUES (?1, ?2, ?3, ?4, ?5)",
-          params![
-            department_title,
-            course.number,
-            course.title,
-            course.creditHour,
-            course.course_type
-          ],
-        )?;
-
-        // Insert schedule if times are present
-        let schedule_key = if let (Value::Number(begin), Value::Number(end)) =
-        (&course.begin, &course.end)
-        {
-          let begin_minutes = begin.as_i64().unwrap_or(0) as i32;
-          let end_minutes = end.as_i64().unwrap_or(0) as i32;
-          conn.execute(
-            "INSERT OR IGNORE INTO schedule (time_begin, time_end, days_pattern) VALUES (?1, ?2, ?3)",
-            params![begin_minutes, end_minutes, course.days],
-          )?;
-          Some((begin_minutes, end_minutes, course.days.clone()))
-        } else {
-          None
+        let available = course.available.map(|s| s.parse::<i32>().unwrap_or(0));
+        let enrollment = course.enrollment.map(|s| s.parse::<i32>().unwrap_or(0));
+        initialize_course_type_table(conn, &course.course_type);
+        initialize_credit_hour_table(conn, &course.credit_hour);
+        // println!("section: {:?}", course.section);
+        let section = match &course.section {
+          Some(s) => s.parse::<i32>().expect("invalid section"),
+          None => panic!("section is null"),
         };
+        let course_number = initialize_course_template_table(
+          conn,
+          course.course_number,
+          &course.course_title,
+          &course.credit_hour,
+          &course.course_type,
+          &department_title
+        );
+        let (time_begin, time_end, day_pattern) = match initialize_time_slot_table(
+          conn,
+          &course.time,
+          &course.days,
+        ) {
+          Some((begin, end, day_pattern)) => (Some(begin), Some(end), Some(day_pattern)),
+          None => (None, None, None),
+        };
+        initialize_location_table(
+          conn,
+          &course.room,
+          &course.building,
+        );
+        initialize_special_enrollment_table(
+          conn,
+          &course.special_enrollment
+        );
+        initialize_instructor_table(
+          conn,
+          &course.instructor
+        );
 
-        // Insert building and room if present
-        if let (Some(building_name), Some(room_number)) =
-        (&course.building, &course.roomNumber)
-        {
-          conn.execute(
-            "INSERT OR IGNORE INTO building (name) VALUES (?1)",
-            params![building_name],
-          )?;
-          conn.execute(
-            "INSERT OR IGNORE INTO location (room_number, building_name) VALUES (?1, ?2)",
-            params![room_number, building_name],
-          )?;
-        }
-
-        // Insert instructor if present
-        if let Some(instructor_name) = &course.instructor {
-          conn.execute(
-            "INSERT OR IGNORE INTO instructor (name) VALUES (?1)",
-            params![instructor_name],
-          )?;
-        }
-
-        // Insert special_enrollment if present
-        if let Some(special_enrollment) = &course.specialEnrollment {
-          conn.execute(
-            "INSERT OR IGNORE INTO special_enrollment (type) VALUES (?1)",
-            params![special_enrollment],
-          )?;
-        }
-
-//         println!("INSERT OR IGNORE INTO course (
-// semester_title, department_title, number, section,
-// available, enrollment_count,
-// instructor_name, room_number, building_name,
-// time_begin, time_end, days_pattern, special_enrollment_type
-// ) VALUES (
-// {:?}, {:?}, {:?}, {:?},
-// {:?}, {:?},
-// {:?}, {:?}, {:?},
-// {:?}, {:?}, {:?}, {:?}
-// )",
-//           semester_title,
-//           department_title,
-//           course.number,
-//           course.section,
-//           course.available,
-//           course.enrollmentCount,
-//           course.instructor,
-//           course.roomNumber,
-//           course.building,
-//           schedule_key.as_ref().map(|(begin, _, _)| begin),
-//           schedule_key.as_ref().map(|(_, end, _)| end),
-//           schedule_key.as_ref().map(|(_, _, days)| days),
-//           course.specialEnrollment,
-//         );
-
-        // Insert course
-        conn.execute(
-          "INSERT OR IGNORE INTO course (
-semester_title, department_title, number, section,
-available, enrollment_count,
-instructor_name, room_number, building_name,
-time_begin, time_end, days_pattern, special_enrollment_type
-) VALUES (
-?1, ?2, ?3, ?4,
-?5, ?6,
-?7, ?8, ?9,
-?10, ?11, ?12, ?13
-)",
+        conn.execute(r#"
+          INSERT INTO course (
+            semester_title,
+            department_title,
+            available,
+            enrollment,
+            course_number,
+            section,
+            room_number,
+            building_name,
+            time_begin,
+            time_end,
+            day_pattern,
+            special_enrollment,
+            instructor_name
+          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)"#,
           params![
             semester_title,
             department_title,
-            course.number,
-            course.section,
-            course.available,
-            course.enrollmentCount,
-            course.instructor,
-            course.roomNumber,
+            available,
+            enrollment,
+            course_number,
+            section,
+            course.room,
             course.building,
-            schedule_key.as_ref().map(|(begin, _, _)| begin),
-            schedule_key.as_ref().map(|(_, end, _)| end),
-            schedule_key.as_ref().map(|(_, _, days)| days),
-            course.specialEnrollment,
+            time_begin,
+            time_end,
+            day_pattern,
+            course.special_enrollment,
+            course.instructor,
           ],
-        )?;
+        ).expect("err");
 
-        // Insert lab if present
-        if let Some(lab) = &course.lab {
-          // Insert course type if present
-          // if let Some(course_type) = &lab.lab_type {
-          // }
-          conn.execute(
-            "INSERT OR IGNORE INTO course_type (type) VALUES (?1)",
-            params![lab.lab_type],
-          )?;
-
-          // Insert building and room if present
-          if let (Some(building_name), Some(room_number)) =
-          (&lab.building, &lab.roomNumber)
-          {
-            conn.execute(
-              "INSERT OR IGNORE INTO building (name) VALUES (?1)",
-              params![building_name],
-            )?;
-            conn.execute(
-              "INSERT OR IGNORE INTO location (room_number, building_name) VALUES (?1, ?2)",
-              params![room_number, building_name],
-            )?;
-          }
-
-          // Insert instructor if present
-          if let Some(instructor_name) = &lab.instructor {
-            conn.execute(
-              "INSERT OR IGNORE INTO instructor (name) VALUES (?1)",
-              params![instructor_name],
-            )?;
-          }
-
-          // Insert schedule if times are present
-          let schedule_key = if let (Value::Number(begin), Value::Number(end)) =
-          (&lab.begin, &lab.end)
-          {
-            let begin_minutes = begin.as_i64().unwrap_or(0) as i32;
-            let end_minutes = end.as_i64().unwrap_or(0) as i32;
-            conn.execute(
-              "INSERT OR IGNORE INTO schedule (time_begin, time_end, days_pattern) VALUES (?1, ?2, ?3)",
-              params![begin_minutes, end_minutes, lab.days],
-            )?;
-            Some((begin_minutes, end_minutes, lab.days.clone()))
-          } else {
-            None
-          };
-
-          conn.execute(
-            "INSERT OR IGNORE INTO lab (
-semester_title, department_title, course_number, section, type, instructor_name,
-room_number, building_name, time_begin, time_end, days_pattern
-) VALUES (
-?1, ?2, ?3, ?4, ?5,
-?6, ?7, ?8, ?9, ?10, ?11
-)",
-            params![
-              semester_title,
-              department_title,
-              course.number,
-              course.section,
-              lab.lab_type,
-              lab.instructor,
-              lab.roomNumber,
-              lab.building,
-              schedule_key.as_ref().map(|(begin, _, _)| begin),
-              schedule_key.as_ref().map(|(_, end, _)| end),
-              schedule_key.as_ref().map(|(_, _, days)| days),
-            ],
-          )?;
-        }
+        // initialize_course_extension_table
       }
     }
   }
-  Ok(())
 }
+
+fn initialize_course_type_table(
+  conn: &Connection,
+  course_type: &Option<String>,
+) {
+  if let Some(course_type) = &course_type {
+    let _ = conn.execute(
+      "INSERT OR IGNORE INTO course_type (course_type) VALUES (?1)",
+      params![course_type],
+    );
+  }
+}
+
+fn initialize_credit_hour_table(
+  conn: &Connection,
+  credit_hour: &Option<String>,
+) {
+  let Some(credit_hour) = &credit_hour else {return};
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO credit_hour (credit_hour) VALUES (?1)",
+    params![credit_hour],
+  );
+}
+
+fn initialize_course_template_table(
+  conn: &Connection,
+  course_number: Option<String>,
+  course_title: &Option<String>,
+  credit_hour: &Option<String>,
+  course_type: &Option<String>,
+  department_title: &String,
+) -> i32{
+  // println!("course_number: {:?}", course_number);
+  let course_number = &course_number.unwrap().parse::<i32>().expect("invalid course_number");
+
+  let _ = conn.execute(
+    r#"INSERT OR IGNORE INTO course_template (
+      department_title,
+      course_number,
+      course_title,
+      credit_hour,
+      course_type
+    ) VALUES (?1, ?2, ?3, ?4, ?5)"#,
+    params![
+      department_title,
+      course_number,
+      course_title,
+      credit_hour,
+      course_type,
+    ],
+  );
+
+  return *course_number;
+}
+
+fn initialize_time_slot_table(
+  conn: &Connection,
+  time: &Option<String>,
+  days: &Option<String>,
+) -> Option<(i32, i32, String)> {
+  let Some(time) = &time else {return None};
+  let Some(day_pattern) = &days else {return None};
+
+  let Ok((begin, end)) = parse_time_string(time) else {return None};
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO day_pattern (day_pattern) VALUES (?1)",
+    params![day_pattern],
+  );
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO time_slot (time_begin, time_end, day_pattern) VALUES (?1, ?2, ?3)",
+    params![begin, end, day_pattern],
+  );
+  return Some((begin, end, day_pattern.to_string()));
+}
+
+fn initialize_location_table(
+  conn: &Connection,
+  room: &Option<String>,
+  building: &Option<String>,
+) {
+  let Some(room_number) = &room else {return};
+  let Some(building) = &building else {return};
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO building (building_name) VALUES (?1)",
+    params![building],
+  );
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO location (room_number, building_name) VALUES (?1, ?2)",
+    params![room_number, building],
+  );
+}
+
+fn initialize_special_enrollment_table(
+  conn: &Connection,
+  special_enrollment: &Option<String>,
+) {
+  let Some(special_enrollment) = &special_enrollment else {return};
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO special_enrollment (special_enrollment) VALUES (?1)",
+    params![special_enrollment],
+  );
+}
+
+fn initialize_instructor_table(
+  conn: &Connection,
+  instructor: &Option<String>
+) {
+  let Some(instructor) = &instructor else {return};
+  let _ = conn.execute(
+    "INSERT OR IGNORE INTO instructor (instructor_name) VALUES (?1)",
+    params![instructor],
+  );
+}
+
+fn initialize_course_extension_table(
+  conn: &Connection,
+  extension: &Option<Extension>
+) {
+  let Some(extension) = &extension else {return};
+  // let _ = conn.execute(
+  //   "INSERT OR IGNORE INTO instructor (name) VALUES (?1)",
+  //   params![instructor],
+  // );
+}
+
