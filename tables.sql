@@ -34,9 +34,7 @@ CREATE TABLE day_pattern (
 CREATE TABLE time_slot (
   time_begin INTEGER NOT NULL, -- in minutes from midnight
   time_end INTEGER NOT NULL,   -- in minutes from midnight
-  day_pattern TEXT NOT NULL,
-  FOREIGN KEY (day_pattern) REFERENCES day_pattern(day_pattern),
-  PRIMARY KEY (time_begin, time_end, day_pattern)
+  PRIMARY KEY (time_begin, time_end)
 );
 
 CREATE TABLE building (
@@ -73,7 +71,8 @@ CREATE TABLE course_extension (
   instructor_name TEXT, -- nullable
   FOREIGN KEY (extension_type) REFERENCES extension_type(extension_type),
   FOREIGN KEY (room_number, building_name) REFERENCES location(room_number, building_name),
-  FOREIGN KEY (time_begin, time_end, day_pattern) REFERENCES time_slot(time_begin, time_end, day_pattern),
+  FOREIGN KEY (time_begin, time_end) REFERENCES time_slot(time_begin, time_end),
+  FOREIGN KEY (day_pattern) REFERENCES day_pattern(day_pattern),
   FOREIGN KEY (instructor_name) REFERENCES instructor(instructor_name)
 );
 
@@ -96,30 +95,31 @@ CREATE TABLE course (
   FOREIGN KEY (semester_title) REFERENCES semester(semester_title),
   FOREIGN KEY (department_title, course_number) REFERENCES course_template(department_title, course_number),
   FOREIGN KEY (room_number, building_name) REFERENCES location(room_number, building_name),
-  FOREIGN KEY (time_begin, time_end, day_pattern) REFERENCES time_slot(time_begin, time_end, day_pattern),
+  FOREIGN KEY (time_begin, time_end) REFERENCES time_slot(time_begin, time_end),
+  FOREIGN KEY (day_pattern) REFERENCES day_pattern(day_pattern),
   FOREIGN KEY (special_enrollment) REFERENCES special_enrollment(special_enrollment),
   FOREIGN KEY (instructor_name) REFERENCES instructor(instructor_name),
   FOREIGN KEY (course_extension_id) REFERENCES course_extension(course_extension_id)
 );
 
-CREATE TABLE user (
-  username TEXT PRIMARY KEY NOT NULL,
-  password TEXT NOT NULL
-);
-
-CREATE TABLE schedule (
-  schedule_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  schedule_name TEXT NOT NULL,
-  username TEXT NOT NULL,
-  semester_title TEXT NOT NULL,
-  FOREIGN KEY (username) REFERENCES user(username),
-  FOREIGN KEY (semester_title) REFERENCES semester(semester_title)
-);
-
-CREATE TABLE schedule_course (
-  schedule_id INTEGER NOT NULL,
-  course_id INTEGER NOT NULL,
-  FOREIGN KEY (schedule_id) REFERENCES schedule(schedule_id),
-  FOREIGN KEY (course_id) REFERENCES course(course_id),
-  PRIMARY KEY (schedule_id, course_id)
-);
+-- CREATE TABLE user (
+--   username TEXT PRIMARY KEY NOT NULL,
+--   password TEXT NOT NULL
+-- );
+--
+-- CREATE TABLE schedule (
+--   schedule_id INTEGER PRIMARY KEY AUTOINCREMENT,
+--   schedule_name TEXT NOT NULL,
+--   username TEXT NOT NULL,
+--   semester_title TEXT NOT NULL,
+--   FOREIGN KEY (username) REFERENCES user(username),
+--   FOREIGN KEY (semester_title) REFERENCES semester(semester_title)
+-- );
+--
+-- CREATE TABLE schedule_course (
+--   schedule_id INTEGER NOT NULL,
+--   course_id INTEGER NOT NULL,
+--   FOREIGN KEY (schedule_id) REFERENCES schedule(schedule_id),
+--   FOREIGN KEY (course_id) REFERENCES course(course_id),
+--   PRIMARY KEY (schedule_id, course_id)
+-- );

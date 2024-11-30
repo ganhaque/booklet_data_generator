@@ -248,8 +248,8 @@ fn initialize_time_slot_table(
     params![day_pattern],
   );
   let _ = conn.execute(
-    "INSERT OR IGNORE INTO time_slot (time_begin, time_end, day_pattern) VALUES (?1, ?2, ?3)",
-    params![begin, end, day_pattern],
+    "INSERT OR IGNORE INTO time_slot (time_begin, time_end) VALUES (?1, ?2)",
+    params![begin, end],
   );
   return Some((begin, end, day_pattern.to_string()));
 }
