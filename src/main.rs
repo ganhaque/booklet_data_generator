@@ -77,22 +77,27 @@ fn capitalize(input: &str) -> String {
     .cloned()
     .collect();
 
-  input
-    .split_whitespace()
+  let output = input
+    .split(|c: char| c.is_whitespace() || c == '-')
+    .filter(|word| !word.is_empty())
     .map(|word| {
       if roman_numerals.contains(word) {
         word.to_string()
-      } else {
+      }
+      else {
         let mut chars = word.chars();
         if let Some(first_char) = chars.next() {
-          first_char.to_uppercase().collect::<String>() + chars.as_str()
+          first_char.to_uppercase().collect::<String>() + chars.as_str().to_lowercase().as_str()
         } else {
           String::new()
         }
       }
     })
     .collect::<Vec<_>>()
-    .join(" ")
+    .join(" ");
+
+  // println!("{}", output);
+  return output;
 }
 
 fn initialize_semester_table(conn: &Connection, database: &Database) {
@@ -111,9 +116,10 @@ fn initialize_department_table(conn: &Connection, database: &Database) {
         .get(0)
         .map(|course| course.abbreviation.clone())
         .unwrap_or_default();
+      let department_title = capitalize(department_title);
       let _ = conn.execute(
         "INSERT OR IGNORE INTO department (department_title, abbreviation) VALUES (?1, ?2)",
-        params![capitalize(department_title), department_abbreviation],
+        params![department_title, department_abbreviation],
       );
     }
   }
@@ -122,6 +128,7 @@ fn initialize_department_table(conn: &Connection, database: &Database) {
 fn initialize_course_table(conn: &Connection, database: Database) {
   for (semester_title, departments) in database.semesters {
     for (department_title, courses) in departments {
+      let department_title = capitalize(department_title.as_str());
       println!("\x1b[32m[SUCCESS]\x1b[0m {}, {}", semester_title, department_title);
       for course in courses {
         // println!("course: {:?}", course);
@@ -188,7 +195,7 @@ fn initialize_course_table(conn: &Connection, database: Database) {
           ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)"#,
           params![
             semester_title,
-            capitalize(department_title.as_str()),
+            department_title,
             available,
             enrollment,
             course_number,
@@ -242,6 +249,7 @@ fn initialize_course_template_table(
 ) -> i32{
   // println!("course_number: {:?}", course_number);
   let course_number = &course_number.unwrap().parse::<i32>().expect("invalid course_number");
+  let department_title = capitalize(department_title);
   let title = course_title.clone().map(|c| capitalize(c.as_str()));
 
   let _ = conn.execute(
