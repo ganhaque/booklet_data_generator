@@ -3,7 +3,7 @@ mod helper;
 use helper::parse_time_string;
 use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::{collections::HashSet, fs};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Extension {
@@ -67,6 +67,34 @@ fn main() -> Result<()> {
   Ok(())
 }
 
+fn capitalize(input: &str) -> String {
+  // should be enough
+  let roman_numerals: HashSet<&str> = [
+    "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+    "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX",
+  ]
+    .iter()
+    .cloned()
+    .collect();
+
+  input
+    .split_whitespace()
+    .map(|word| {
+      if roman_numerals.contains(word) {
+        word.to_string()
+      } else {
+        let mut chars = word.chars();
+        if let Some(first_char) = chars.next() {
+          first_char.to_uppercase().collect::<String>() + chars.as_str()
+        } else {
+          String::new()
+        }
+      }
+    })
+    .collect::<Vec<_>>()
+    .join(" ")
+}
+
 fn initialize_semester_table(conn: &Connection, database: &Database) {
   for (semester_title, _) in &database.semesters {
     let _ = conn.execute(
@@ -85,7 +113,7 @@ fn initialize_department_table(conn: &Connection, database: &Database) {
         .unwrap_or_default();
       let _ = conn.execute(
         "INSERT OR IGNORE INTO department (department_title, abbreviation) VALUES (?1, ?2)",
-        params![department_title, department_abbreviation],
+        params![capitalize(department_title), department_abbreviation],
       );
     }
   }
@@ -135,10 +163,12 @@ fn initialize_course_table(conn: &Connection, database: Database) {
           conn,
           &course.instructor
         );
-        let course_extension_id = initialize_course_extension_table(
-          conn,
-          &course.extension,
-        );
+        // let course_extension_id = initialize_course_extension_table(
+        //   conn,
+        //   &course.extension,
+        // );
+        let building_name = course.building.map(|b| capitalize(b.as_str()));
+        let instructor_name = course.instructor.map(|b| capitalize(b.as_str()));
 
         conn.execute(r#"
           INSERT INTO course (
@@ -154,24 +184,23 @@ fn initialize_course_table(conn: &Connection, database: Database) {
             time_end,
             day_pattern,
             special_enrollment,
-            instructor_name,
-            course_extension_id
-          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)"#,
+            instructor_name
+          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)"#,
           params![
             semester_title,
-            department_title,
+            capitalize(department_title.as_str()),
             available,
             enrollment,
             course_number,
             section,
             course.room,
-            course.building,
+            building_name,
             time_begin,
             time_end,
             day_pattern,
             course.special_enrollment,
-            course.instructor,
-            course_extension_id,
+            instructor_name,
+            // course_extension_id,
           ],
         ).expect("err");
 
@@ -213,6 +242,7 @@ fn initialize_course_template_table(
 ) -> i32{
   // println!("course_number: {:?}", course_number);
   let course_number = &course_number.unwrap().parse::<i32>().expect("invalid course_number");
+  let title = course_title.clone().map(|c| capitalize(c.as_str()));
 
   let _ = conn.execute(
     r#"INSERT OR IGNORE INTO course_template (
@@ -225,7 +255,7 @@ fn initialize_course_template_table(
     params![
       department_title,
       course_number,
-      course_title,
+      title,
       credit_hour,
       course_type,
     ],
@@ -261,6 +291,8 @@ fn initialize_location_table(
 ) {
   let Some(room_number) = &room else {return};
   let Some(building) = &building else {return};
+  let building = capitalize(building);
+
   let _ = conn.execute(
     "INSERT OR IGNORE INTO building (building_name) VALUES (?1)",
     params![building],
@@ -287,64 +319,65 @@ fn initialize_instructor_table(
   instructor: &Option<String>
 ) {
   let Some(instructor) = &instructor else {return};
+  let instructor = capitalize(instructor);
   let _ = conn.execute(
     "INSERT OR IGNORE INTO instructor (instructor_name) VALUES (?1)",
     params![instructor],
   );
 }
 
-fn initialize_course_extension_table(
-  conn: &Connection,
-  extension: &Option<Extension>
-) -> Option<i64>{
-  let Some(extension) = &extension else {return None};
-
-  // initialize_extension_type
-  let _ = conn.execute(
-    "INSERT OR IGNORE INTO extension_type (extension_type) VALUES (?1)",
-    params![extension.course_type],
-  );
-
-  initialize_location_table(
-    conn,
-    &extension.room,
-    &extension.building,
-  );
-  let (time_begin, time_end, day_pattern) = match initialize_time_slot_table(
-    conn,
-    &extension.time,
-    &extension.days,
-  ) {
-    Some((begin, end, day_pattern)) => (Some(begin), Some(end), Some(day_pattern)),
-    None => (None, None, None),
-  };
-  initialize_instructor_table(
-    conn,
-    &extension.instructor
-  );
-
-  conn.execute(r#"
-    INSERT INTO course_extension (
-      extension_type,
-      room_number,
-      building_name,
-      time_begin,
-      time_end,
-      day_pattern,
-      instructor_name
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#,
-    params![
-      extension.course_type,
-      extension.room,
-      extension.building,
-      time_begin,
-      time_end,
-      day_pattern,
-      extension.instructor,
-    ],
-  ).expect("err");
-
-  // return auto-increment id
-  Some(conn.last_insert_rowid())
-}
+// fn initialize_course_extension_table(
+//   conn: &Connection,
+//   extension: &Option<Extension>
+// ) -> Option<i64>{
+//   let Some(extension) = &extension else {return None};
+//
+//   // initialize_extension_type
+//   let _ = conn.execute(
+//     "INSERT OR IGNORE INTO extension_type (extension_type) VALUES (?1)",
+//     params![extension.course_type],
+//   );
+//
+//   initialize_location_table(
+//     conn,
+//     &extension.room,
+//     &extension.building,
+//   );
+//   let (time_begin, time_end, day_pattern) = match initialize_time_slot_table(
+//     conn,
+//     &extension.time,
+//     &extension.days,
+//   ) {
+//     Some((begin, end, day_pattern)) => (Some(begin), Some(end), Some(day_pattern)),
+//     None => (None, None, None),
+//   };
+//   initialize_instructor_table(
+//     conn,
+//     &extension.instructor
+//   );
+//
+//   conn.execute(r#"
+//     INSERT INTO course_extension (
+//       extension_type,
+//       room_number,
+//       building_name,
+//       time_begin,
+//       time_end,
+//       day_pattern,
+//       instructor_name
+//     ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#,
+//     params![
+//       extension.course_type,
+//       extension.room,
+//       extension.building,
+//       time_begin,
+//       time_end,
+//       day_pattern,
+//       extension.instructor,
+//     ],
+//   ).expect("err");
+//
+//   // return auto-increment id
+//   Some(conn.last_insert_rowid())
+// }
 

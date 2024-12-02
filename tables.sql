@@ -19,11 +19,11 @@ CREATE TABLE course_template (
   department_title TEXT NOT NULL,
   course_number INTEGER NOT NULL,
   course_title TEXT NOT NULL,
-  credit_hour TEXT,
+  credit_hour TEXT, -- nullable
   course_type TEXT, -- nullable
   FOREIGN KEY (department_title) REFERENCES department(department_title),
-  FOREIGN KEY (course_type) REFERENCES course_type(course_type),
-  FOREIGN KEY (credit_hour) REFERENCES credit_hour(credit_hour),
+  FOREIGN KEY (course_type) REFERENCES course_type(course_type) ON DELETE SET NULL,
+  FOREIGN KEY (credit_hour) REFERENCES credit_hour(credit_hour) ON DELETE SET NULL,
   PRIMARY KEY (department_title, course_number)
 );
 
@@ -56,26 +56,6 @@ CREATE TABLE instructor (
   instructor_name TEXT PRIMARY KEY
 );
 
-CREATE TABLE extension_type (
-  extension_type TEXT PRIMARY KEY
-);
-
-CREATE TABLE course_extension (
-  course_extension_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  extension_type TEXT NOT NULL,
-  room_number TEXT, -- nullable
-  building_name TEXT, -- nullable
-  time_begin INTEGER, -- nullable
-  time_end INTEGER, -- nullable
-  day_pattern TEXT, -- nullable
-  instructor_name TEXT, -- nullable
-  FOREIGN KEY (extension_type) REFERENCES extension_type(extension_type),
-  FOREIGN KEY (room_number, building_name) REFERENCES location(room_number, building_name),
-  FOREIGN KEY (time_begin, time_end) REFERENCES time_slot(time_begin, time_end),
-  FOREIGN KEY (day_pattern) REFERENCES day_pattern(day_pattern),
-  FOREIGN KEY (instructor_name) REFERENCES instructor(instructor_name)
-);
-
 CREATE TABLE course (
   course_id INTEGER PRIMARY KEY AUTOINCREMENT,
   semester_title TEXT NOT NULL,
@@ -91,15 +71,13 @@ CREATE TABLE course (
   day_pattern TEXT, -- nullable
   special_enrollment TEXT, -- nullable
   instructor_name TEXT, -- nullable
-  course_extension_id INTEGER, -- nullable
   FOREIGN KEY (semester_title) REFERENCES semester(semester_title),
   FOREIGN KEY (department_title, course_number) REFERENCES course_template(department_title, course_number),
-  FOREIGN KEY (room_number, building_name) REFERENCES location(room_number, building_name),
-  FOREIGN KEY (time_begin, time_end) REFERENCES time_slot(time_begin, time_end),
-  FOREIGN KEY (day_pattern) REFERENCES day_pattern(day_pattern),
-  FOREIGN KEY (special_enrollment) REFERENCES special_enrollment(special_enrollment),
-  FOREIGN KEY (instructor_name) REFERENCES instructor(instructor_name),
-  FOREIGN KEY (course_extension_id) REFERENCES course_extension(course_extension_id)
+  FOREIGN KEY (room_number, building_name) REFERENCES location(room_number, building_name) ON DELETE SET NULL,
+  FOREIGN KEY (time_begin, time_end) REFERENCES time_slot(time_begin, time_end) ON DELETE SET NULL,
+  FOREIGN KEY (day_pattern) REFERENCES day_pattern(day_pattern) ON DELETE SET NULL,
+  FOREIGN KEY (special_enrollment) REFERENCES special_enrollment(special_enrollment) ON DELETE SET NULL,
+  FOREIGN KEY (instructor_name) REFERENCES instructor(instructor_name) ON DELETE SET NULL
 );
 
 -- CREATE TABLE user (
